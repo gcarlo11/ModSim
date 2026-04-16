@@ -103,7 +103,7 @@ Buka Main, lalu tambahkan Variable untuk rekap statistik:
 
 ## 5. Buat Function Bantu di Main
 
-Tambahkan 4 Function di Main.
+Tambahkan 5 Function di Main.
 
 ### 5.1 avgWaktuTunggu
 - Return type: double
@@ -132,6 +132,36 @@ return totalSelesai == 0 ? 0 : totalWaktuSistem / totalSelesai;
 ```java
 return totalSelesai == 0 ? 0 : (100.0 * totalErrorScanner / totalSelesai);
 ```
+
+### 5.5 hitungWaktuService
+- Return type: double
+- Parameters: `Agent ag`
+
+```java
+Mahasiswa a = (Mahasiswa) ag;
+double durasiDasar;
+
+if (a.jumlahBuku <= 2) {
+    durasiDasar = uniform(2, 3);
+} else if (a.jumlahBuku <= 4) {
+    durasiDasar = uniform(3, 4);
+} else {
+    durasiDasar = uniform(4, 6);
+}
+
+// 5% kemungkinan error scanner
+a.scannerError = false;
+if (uniform(0, 1) < 0.05) {
+    durasiDasar += uniform(2, 3);
+    a.scannerError = true;
+}
+
+return durasiDasar;
+```
+
+Catatan penting:
+- Di editor Function AnyLogic, isi kode body saja (jangan tulis deklarasi method lengkap).
+- Pastikan parameter benar-benar ditambahkan di Properties function dengan nama `ag`.
 
 ---
 
@@ -234,25 +264,12 @@ agent.waktuTunggu = agent.tMulaiLayanan - agent.tMasukSistem;
 Tempel:
 
 ```java
-double durasiDasar;
-
-if (agent.jumlahBuku <= 2) {
-    durasiDasar = uniform(2, 3);
-} else if (agent.jumlahBuku <= 4) {
-    durasiDasar = uniform(3, 4);
-} else {
-    durasiDasar = uniform(4, 6);
-}
-
-// 5% kemungkinan error scanner
-agent.scannerError = false;
-if (uniform(0, 1) < 0.05) {
-    durasiDasar += uniform(2, 3);
-    agent.scannerError = true;
-}
-
-return durasiDasar;
+hitungWaktuService(agent)
 ```
+
+Catatan penting:
+- Jika Anda mengetik kode ini di tab Actions (On enter/On exit), AnyLogic akan menganggapnya `void`, sehingga `return` memicu error.
+- Pastikan kode `return ...` hanya ada di function `hitungWaktuService` (langkah 5.5), bukan di Actions.
 
 ### 9.4 Action di Service -> On exit
 Tempel:
@@ -442,3 +459,192 @@ Data minimal yang dikirim ke modul berikutnya:
 - tSelesaiLayanan
 
 Dengan ini fitur peminjaman buku di counter siap diintegrasikan ke modul ruang baca, return, dan denda.
+
+---
+
+## 17. Upgrade Ke Simulasi 3D (Dari Model Yang Sudah Jalan)
+
+Bagian ini khusus untuk kebutuhan presentasi 3D.
+Anda tidak perlu mengulang model dari awal; cukup upgrade model saat ini.
+
+### 17.1 Pilih Mode 3D Yang Aman Untuk Pemula
+
+Gunakan mode berikut dulu:
+- Logika proses tetap: Source -> Queue -> Service -> Sink
+- Tambah visual ruangan 3D + kamera 3D
+- Tambah avatar 3D untuk agent Mahasiswa
+
+Ini paling stabil untuk tugas kuliah karena:
+- model tidak rusak,
+- metrik tetap konsisten,
+- tampilan jadi 3D saat demo.
+
+### 17.2 Tambah Jendela 3D
+
+1. Buka agent Main.
+2. Dari Palette -> Presentation, drag elemen `3D Window` ke canvas.
+3. Rename menjadi `win3D`.
+4. Atur ukuran jendela lebih besar agar scene mudah dilihat.
+
+### 17.3 Tambah Kamera 3D
+
+1. Dari Palette -> Presentation, drag `Camera` ke Main.
+2. Rename: `camMain`.
+3. Di Properties kamera, atur posisi sampai area counter terlihat jelas.
+
+Contoh posisi awal (silakan sesuaikan):
+- X = 25
+- Y = -20
+- Z = 16
+
+### 17.4 Bangun Ruang Perpustakaan 3D
+
+Di Main, dari Palette -> 3D Objects, tambahkan objek ini:
+
+1. Lantai (Box)
+- Name: `floor3D`
+- Size kira-kira: 30 x 20 x 0.2
+
+2. Counter peminjaman (Box)
+- Name: `counter3D`
+- Size kira-kira: 6 x 1.2 x 1.1
+
+3. Rak buku (beberapa Box)
+- Name: `shelfA`, `shelfB`, `shelfC`
+
+4. Kursi/meja (opsional)
+- Tambah Box kecil untuk detail visual
+
+Tips:
+- Fokus dulu area antrean + counter.
+- Tidak perlu terlalu detail agar model tetap ringan.
+
+### 17.5 Buat Avatar 3D Untuk Mahasiswa
+
+Masuk ke agent `Mahasiswa`, lalu tambahkan shape 3D sederhana:
+
+Opsi paling mudah:
+- Cylinder (badan)
+- Sphere (kepala)
+
+Alternatif:
+- Jika tersedia, gunakan objek manusia siap pakai dari 3D Objects.
+
+Tujuan tahap ini:
+- setiap entity mahasiswa terlihat sebagai objek 3D, bukan titik biasa.
+
+### 17.6 Sinkronkan Logika Proses Dengan Posisi 3D (Walking Halus, Tetap Stabil)
+
+Supaya agent terlihat berjalan (bukan teleport), pakai aturan ini:
+- `setXYZ(...)` hanya untuk posisi awal saat agent baru dibuat.
+- Perpindahan antar fase proses pakai `moveToInTime(...)`.
+- Tambahkan 1 blok `Delay` sebelum `Sink` agar gerak keluar sempat terlihat.
+
+#### Langkah A: Sisipkan blok Delay sebelum Sink
+
+Di flow, ubah menjadi:
+
+`srcMahasiswa -> qCheckout -> srvCheckout -> dlyKeluar -> snkSelesai`
+
+Konfigurasi `dlyKeluar`:
+- Delay time: `1.2` menit (boleh 0.8-1.5 sesuai selera visual)
+
+#### Langkah B: Atur gerak dari Source ke area antre
+
+Di `srcMahasiswa` -> On exit, tambahkan:
+
+```java
+agent.setXYZ(2, 3, 0);           // spawn awal
+agent.moveToInTime(10, 6, 0, 1); // jalan ke area antre
+```
+
+#### Langkah C: Bentuk baris antre yang terlihat rapi
+
+Di `qCheckout` -> On enter, tambahkan:
+
+```java
+double idx = Math.max(0, qCheckout.size() - 1);
+idx = Math.min(idx, 8);
+
+double xAntre = 10 - idx * 0.9;
+double yAntre = 6;
+
+agent.moveToInTime(xAntre, yAntre, 0, 0.6);
+```
+
+#### Langkah D: Gerakkan ke counter saat mulai dilayani
+
+Di `srvCheckout` -> On enter, tambahkan baris ini di paling atas:
+
+```java
+agent.moveToInTime(16, 6, 0, 0.8);
+```
+
+Lalu biarkan kode statistik yang sudah ada tetap dipakai:
+
+```java
+agent.tMulaiLayanan = time();
+agent.waktuTunggu = agent.tMulaiLayanan - agent.tMasukSistem;
+```
+
+#### Langkah E: Gerak keluar sebelum benar-benar selesai
+
+Di `dlyKeluar` -> On enter, tambahkan:
+
+```java
+agent.moveToInTime(26, 3, 0, 1.0);
+```
+
+Di `snkSelesai` -> On enter:
+- Jangan isi `setXYZ(...)` lagi.
+- Biarkan hanya kode rekap statistik (yang sudah dibuat di langkah 10).
+
+### 17.7 Kenapa Perlu Delay Sebelum Sink
+
+`Sink` langsung mengeluarkan agent dari model.
+Kalau animasi keluar dipasang di `Sink`, gerakan sering tidak sempat terlihat.
+
+Dengan `dlyKeluar`, alurnya jadi:
+- selesai dilayani,
+- jalan ke pintu keluar,
+- baru hilang dari model.
+
+Hasil visual jauh lebih natural saat presentasi.
+
+### 17.8 Fallback Jika moveToInTime Tidak Tersedia
+
+Pada beberapa versi AnyLogic lama, jika `moveToInTime(...)` tidak dikenali:
+- ganti sementara dengan `moveTo(...)` untuk perpindahan visual,
+- jangan gunakan `setXYZ(...)` untuk perpindahan dinamis.
+
+Contoh fallback sederhana:
+
+```java
+agent.moveTo(16, 6, 0);
+```
+
+Jika model Anda saat ini sudah mengenali `moveToInTime(...)`, tetap gunakan itu karena durasi gerak bisa dikontrol lebih presisi.
+
+### 17.9 Checklist 3D
+
+- `win3D` tampil saat run
+- Kamera mengarah ke area counter
+- Objek ruangan (lantai, counter, rak) terlihat
+- Agent mahasiswa terlihat sebagai objek 3D
+- Posisi agent berubah sesuai fase proses (masuk -> antre -> counter -> keluar)
+- Metrik statistik tetap berjalan normal
+
+Jika semua poin di atas lolos, model Anda sudah 3D dan siap demo.
+
+### 17.10 Mode Presentasi (Agar Tidak Terasa Terlalu Cepat)
+
+Saat demo, kecepatan simulasi sering terasa terlalu cepat jika dibiarkan default.
+
+Gunakan pengaturan ini:
+- Stop time presentasi: 90-120 menit (cukup untuk menunjukkan pola antrean).
+- Speed slider runtime: geser ke kiri sampai gerakan antar titik terlihat jelas.
+- Fokus kamera ke area antre + counter, jangan terlalu zoom out.
+
+Tips tambahan:
+- Jika antrean terlalu padat saat demo, ubah sementara interarrival ke `exponential(12)`.
+- Setelah demo, kembalikan ke skenario asli untuk hasil analisis laporan.
