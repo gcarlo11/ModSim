@@ -31,9 +31,10 @@ Setelah selesai, modelmu akan punya alur:
 1. Mahasiswa muncul di pintu masuk.
 2. Mahasiswa berjalan ke area counter.
 3. Jika counter sibuk, mahasiswa otomatis antri di garis queue.
-4. Mahasiswa dilayani di service point.
-5. Setelah layanan selesai, mahasiswa berjalan ke area keluar.
-6. Mahasiswa keluar model.
+4. Saat service, data peminjaman buku diproses (jumlah buku, tipe pinjaman, deadline, nomor resi).
+5. Jika terjadi error scanner, waktu service otomatis bertambah.
+6. Setelah layanan selesai, mahasiswa berjalan ke area keluar.
+7. Mahasiswa keluar model.
 
 Flowchart utama:
 
@@ -71,6 +72,8 @@ Markup utama:
 - `totalSelesai` (int)
 - `totalWaktuSistem` (double)
 - `maxQueueCounter` (int)
+- `totalBukuDipinjam` (int)
+- `totalErrorScanner` (int)
 
 ---
 
@@ -103,6 +106,11 @@ Setelah tipe dibuat, buka diagram `MahasiswaPed` lalu tambah Variable berikut:
 | Nama | Type | Initial value |
 |---|---|---|
 | idPed | String | "" |
+| jumlahBuku | int | 1 |
+| tipePinjaman | String | "REGULER" |
+| deadlineHari | int | 7 |
+| nomorResi | String | "" |
+| scannerError | boolean | false |
 | tMasuk | double | 0 |
 | tMulaiService | double | 0 |
 | tSelesaiService | double | 0 |
@@ -205,7 +213,24 @@ seqPed++;
 ped.idPed = "M-" + seqPed;
 ped.tMasuk = time();
 
-traceln("ARRIVE " + ped.idPed);
+ped.jumlahBuku = uniform_discr(1, 5);
+
+double r = uniform(0, 1);
+if (r < 0.7) {
+    ped.tipePinjaman = "REGULER";
+    ped.deadlineHari = 7;
+} else if (r < 0.9) {
+    ped.tipePinjaman = "REFERENSI";
+    ped.deadlineHari = 3;
+} else {
+    ped.tipePinjaman = "RESERVE";
+    ped.deadlineHari = 1;
+}
+
+traceln("ARRIVE " + ped.idPed
+    + " | buku=" + ped.jumlahBuku
+    + " | tipe=" + ped.tipePinjaman
+    + " | deadline=" + ped.deadlineHari + " hari");
 ```
 
 ## 8.2 `srvCounter` (PedService)
@@ -214,7 +239,7 @@ Atur properti utama:
 
 - Services: `svcCounter`
 - Queue choice policy: `Shortest queue`
-- Delay time: `triangular(1.5, 2.5, 4)`
+- Delay time: `hitungWaktuServicePeminjaman(ped)`
 - Recovery delay: `0`
 
 Action `On enter queue`:
@@ -236,6 +261,12 @@ Action `On end service`:
 
 ```java
 ped.tSelesaiService = time();
+ped.nomorResi = "REC-" + (long)(time() * 1000) + "-" + ped.idPed;
+
+traceln("SERVICE " + ped.idPed
+    + " | resi=" + ped.nomorResi
+    + " | buku=" + ped.jumlahBuku
+    + " | scannerError=" + ped.scannerError);
 ```
 
 ## 8.3 `wJalanKeluar` (PedWait)
@@ -258,10 +289,18 @@ Action `On enter`:
 ```java
 totalSelesai++;
 
+totalBukuDipinjam += ped.jumlahBuku;
+if (ped.scannerError) {
+    totalErrorScanner++;
+}
+
 double tSistem = time() - ped.tMasuk;
 totalWaktuSistem += tSistem;
 
-traceln("DONE " + ped.idPed + " | tSistem=" + tSistem);
+traceln("DONE " + ped.idPed
+    + " | tSistem=" + tSistem
+    + " | tipe=" + ped.tipePinjaman
+    + " | deadline=" + ped.deadlineHari + " hari");
 ```
 
 ---
@@ -276,11 +315,47 @@ Tambahkan Variable berikut di `Main`:
 | totalSelesai | int | 0 |
 | totalWaktuSistem | double | 0 |
 | maxQueueCounter | int | 0 |
+| totalBukuDipinjam | int | 0 |
+| totalErrorScanner | int | 0 |
+
+Tambahkan Function `hitungWaktuServicePeminjaman` di `Main` (Return type: double, parameter: `MahasiswaPed ped`):
+
+```java
+double dasar;
+
+if (ped.jumlahBuku <= 2) {
+    dasar = uniform(1.5, 2.2);
+} else if (ped.jumlahBuku <= 4) {
+    dasar = uniform(2.2, 3.2);
+} else {
+    dasar = uniform(3.2, 4.5);
+}
+
+ped.scannerError = false;
+if (uniform(0, 1) < 0.05) {
+    dasar += uniform(0.8, 1.4);
+    ped.scannerError = true;
+}
+
+return dasar;
+```
 
 Tambahkan Function `avgWaktuSistem` di `Main` (Return type: double):
 
 ```java
 return totalSelesai == 0 ? 0 : totalWaktuSistem / totalSelesai;
+```
+
+Tambahkan Function `avgBukuPerTransaksi` di `Main` (Return type: double):
+
+```java
+return totalSelesai == 0 ? 0 : (1.0 * totalBukuDipinjam / totalSelesai);
+```
+
+Tambahkan Function `errorScannerRate` di `Main` (Return type: double):
+
+```java
+return totalSelesai == 0 ? 0 : (100.0 * totalErrorScanner / totalSelesai);
 ```
 
 ---
@@ -303,6 +378,18 @@ Tambahkan Text dinamis di `Main`:
 
 ```java
 "Max queue: " + maxQueueCounter
+```
+
+```java
+"Total buku dipinjam: " + totalBukuDipinjam
+```
+
+```java
+"Avg buku/transaksi: " + avgBukuPerTransaksi()
+```
+
+```java
+"Error scanner rate: " + errorScannerRate() + "%"
 ```
 
 ---
@@ -388,6 +475,8 @@ Solusi:
 - `srvCounter` mengarah ke `svcCounter`
 - Pedestrian terlihat jalan, antri, service, lalu jalan keluar
 - Statistik dashboard berubah saat run
+- Data peminjaman buku terisi (`jumlahBuku`, `tipePinjaman`, `deadlineHari`, `nomorResi`)
+- Error scanner sesekali muncul dan memengaruhi waktu service
 - Tidak ada kode manual teleport (`setXYZ`, `jumpTo`) di flow pedestrian
 
 Jika semua poin ini lolos, modelmu sudah sesuai permintaan: 3D berjalan nyata, bukan teleport.
