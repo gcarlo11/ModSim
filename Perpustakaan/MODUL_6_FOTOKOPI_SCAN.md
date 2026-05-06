@@ -1,4 +1,4 @@
-# Modul 5: Fotokopi / Scan
+# Modul 6: Fotokopi / Scan
 ## 2 Mesin Fotokopi dengan Kemungkinan Rusak (+ Repair Time)
 
 **AnyLogic versi:** 8.9.8

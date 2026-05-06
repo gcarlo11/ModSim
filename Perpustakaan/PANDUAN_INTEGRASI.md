@@ -1,6 +1,6 @@
 # Panduan Integrasi: Gabungkan Semua Modul Jadi Satu Simulasi Perpustakaan 3D
 
-**Untuk 1 orang integrator** yang akan menggabungkan 6 modul yang sudah dikerjakan oleh anggota kelompok.
+**Untuk 1 orang integrator** yang akan menggabungkan 7 modul yang sudah dikerjakan oleh anggota kelompok.
 
 ---
 
@@ -42,10 +42,11 @@ srcJalanKaki ────┘          │ (6 output)                            
 |---|---|---|
 | Modul 1 | `srcParkirMobil`, `srcParkirMotor`, `srvParkirMobil`, `srvParkirMotor`, `jalanKePerpus`, `jalanKeParkiran` | Harus selesai |
 | Modul 2 | `srcJalanKaki`, `srvScanKTM`, `selectTujuan`, `selectPulang`, `wJalanKeluar`, `snkSelesai` | **BASE FILE** |
-| Modul 3 | `selectAktivitas`, `srvToiletSinggah`, `srvCariBuku`, `srvLoker`, `selectZonaDuduk`, `srvDudukSepi`, `srvDudukDiskusi` | Harus selesai |
-| Modul 4 | `selectGenderToilet`, `srvToiletPria`, `srvToiletWanita` | Harus selesai |
-| Modul 5 | `srvFotokopi` | Harus selesai |
-| Modul 6 | `srvPinjam`, `srvKembali` | Harus selesai |
+| Modul 3 | `selectButuhBantuan`, `goToHelpdesk`, `antreHelpdesk`, `srvHelpdesk`, `selectStatusBuku`, `goToRakBuku`, `goToPinjam` | Helpdesk Pencarian Buku |
+| Modul 4 | `selectAktivitas`, `srvToiletSinggah`, `srvCariBuku`, `srvLoker`, `selectZonaDuduk`, `srvDudukSepi`, `srvDudukDiskusi` | Harus selesai |
+| Modul 5 | `selectGenderToilet`, `srvToiletPria`, `srvToiletWanita` | Harus selesai |
+| Modul 6 | `srvFotokopi` | Harus selesai |
+| Modul 7 | `srvPinjam`, `srvKembali` | Harus selesai |
 
 ---
 
@@ -82,35 +83,42 @@ Buka diagram **PengunjungPed** (klik 2x di panel Projects). Tambahkan **semua va
 | `noktp` | String | `""` | Modul 2 | Nomor KTM/KTP |
 | `isValidKTM` | boolean | `false` | Modul 2 | `true`=KTM valid |
 | `tujuanLayanan` | String | `""` | Modul 2 | Catatan tujuan: "PINJAM", dll |
-| `jenisKelamin` | String | `""` | Modul 3, 4 | "PRIA" atau "WANITA" |
-| `waktuMulaiAktivitas` | double | `0` | Modul 3 | Waktu mulai aktivitas sebelum duduk |
-| `waktuMulaiDuduk` | double | `0` | Modul 3 | Waktu mulai duduk belajar |
-| `durasiBelajar` | double | `0` | Modul 3 | Durasi belajar (menit) |
-| `zonaDuduk` | String | `""` | Modul 3 | "SEPI" atau "DISKUSI" |
-| `aktivitasSebelumDuduk` | String | `""` | Modul 3 | "TOILET", "BUKU", "LOKER", "LANGSUNG" |
-| `waktuMulaiToilet` | double | `0` | Modul 4 | Waktu masuk bilik toilet |
-| `jumlahHalaman` | int | `0` | Modul 5 | Jumlah halaman fotokopi/scan |
-| `tipeLayananFotokopi` | String | `""` | Modul 5 | "FOTOKOPI" atau "SCAN" |
-| `mesinRusak` | boolean | `false` | Modul 5 | `true`=mesin rusak |
-| `waktuMulaiFotokopi` | double | `0` | Modul 5 | Waktu mulai fotokopi |
-| `isPeminjaman` | boolean | `true` | Modul 6 | `true`=pinjam, `false`=kembali |
-| `jumlahBuku` | int | `1` | Modul 6 | Jumlah buku |
-| `tipePinjaman` | String | `"REGULER"` | Modul 6 | "REGULER"/"REFERENSI"/"RESERVE" |
-| `deadlineHari` | int | `7` | Modul 6 | Deadline pengembalian (hari) |
-| `nomorResi` | String | `""` | Modul 6 | Nomor bukti transaksi |
-| `scannerError` | boolean | `false` | Modul 6 | `true`=scanner error |
-| `waktuPinjam` | double | `0` | Modul 6 | Waktu transaksi pinjam |
-| `waktuKembali` | double | `0` | Modul 6 | Waktu transaksi kembali |
-| `jumlahHariTerlambat` | int | `0` | Modul 6 | Hari keterlambatan |
-| `denda` | double | `0` | Modul 6 | Total denda |
+| `butuhHelpdesk` | boolean | `false` | Modul 3 | `true`=gagal cari buku sendiri |
+| `statusBuku` | String | `""` | Modul 3 | "TERSEDIA", "DIPINJAM", "TIDAK_ADA" |
+| `waktuMulaiAntre` | double | `0` | Modul 3 | Waktu mulai antre helpdesk |
+| `waktuMulaiLayanan` | double | `0` | Modul 3 | Waktu mulai dilayani petugas |
+| `waktuSelesaiLayanan` | double | `0` | Modul 3 | Waktu selesai dilayani |
+| `waktuTunggu` | double | `0` | Modul 3 | Lama menunggu antrean helpdesk |
+| `waktuLayanan` | double | `0` | Modul 3 | Lama dilayani petugas helpdesk |
+| `jenisKelamin` | String | `""` | Modul 4, 5 | "PRIA" atau "WANITA" |
+| `waktuMulaiAktivitas` | double | `0` | Modul 4 | Waktu mulai aktivitas sebelum duduk |
+| `waktuMulaiDuduk` | double | `0` | Modul 4 | Waktu mulai duduk belajar |
+| `durasiBelajar` | double | `0` | Modul 4 | Durasi belajar (menit) |
+| `zonaDuduk` | String | `""` | Modul 4 | "SEPI" atau "DISKUSI" |
+| `aktivitasSebelumDuduk` | String | `""` | Modul 4 | "TOILET", "BUKU", "LOKER", "LANGSUNG" |
+| `waktuMulaiToilet` | double | `0` | Modul 5 | Waktu masuk bilik toilet |
+| `jumlahHalaman` | int | `0` | Modul 6 | Jumlah halaman fotokopi/scan |
+| `tipeLayananFotokopi` | String | `""` | Modul 6 | "FOTOKOPI" atau "SCAN" |
+| `mesinRusak` | boolean | `false` | Modul 6 | `true`=mesin rusak |
+| `waktuMulaiFotokopi` | double | `0` | Modul 6 | Waktu mulai fotokopi |
+| `isPeminjaman` | boolean | `true` | Modul 7 | `true`=pinjam, `false`=kembali |
+| `jumlahBuku` | int | `1` | Modul 7 | Jumlah buku |
+| `tipePinjaman` | String | `"REGULER"` | Modul 7 | "REGULER"/"REFERENSI"/"RESERVE" |
+| `deadlineHari` | int | `7` | Modul 7 | Deadline pengembalian (hari) |
+| `nomorResi` | String | `""` | Modul 7 | Nomor bukti transaksi |
+| `scannerError` | boolean | `false` | Modul 7 | `true`=scanner error |
+| `waktuPinjam` | double | `0` | Modul 7 | Waktu transaksi pinjam |
+| `waktuKembali` | double | `0` | Modul 7 | Waktu transaksi kembali |
+| `jumlahHariTerlambat` | int | `0` | Modul 7 | Hari keterlambatan |
+| `denda` | double | `0` | Modul 7 | Total denda |
 
-> **Tips:** Buka semua diagram PengunjungPed dari modul 1-6 secara bersamaan. Bandingkan daftar variabel. Copy yang belum ada di file `_Full`.
+> **Tips:** Buka semua diagram PengunjungPed dari modul 1-7 secara bersamaan. Bandingkan daftar variabel. Copy yang belum ada di file `_Full`.
 
 ---
 
 ## Langkah 3: Merge Semua Variabel di Main
 
-Buka **Main**. Tambahkan semua variabel dari tabel di bawah. Total ~35 variabel.
+Buka **Main**. Tambahkan semua variabel dari tabel di bawah. Total ~42 variabel.
 
 | Nama | Type | Initial | Modul |
 |---|---|---|---|
@@ -121,32 +129,39 @@ Buka **Main**. Tambahkan semua variabel dari tabel di bawah. Total ~35 variabel.
 | `totalDosen` | int | 0 | Modul 2 |
 | `totalMobil` | int | 0 | Modul 1 |
 | `totalMotor` | int | 0 | Modul 1 |
-| `totalToiletSinggah` | int | 0 | Modul 3 |
-| `totalCariBuku` | int | 0 | Modul 3 |
-| `totalLoker` | int | 0 | Modul 3 |
-| `totalDudukSepi` | int | 0 | Modul 3 |
-| `totalDudukDiskusi` | int | 0 | Modul 3 |
-| `maxAntrianDudukSepi` | int | 0 | Modul 3 |
-| `maxAntrianDudukDiskusi` | int | 0 | Modul 3 |
-| `totalDurasiBelajar` | double | 0 | Modul 3 |
-| `totalToiletPria` | int | 0 | Modul 4 |
-| `totalToiletWanita` | int | 0 | Modul 4 |
-| `maxAntrianToiletPria` | int | 0 | Modul 4 |
-| `maxAntrianToiletWanita` | int | 0 | Modul 4 |
-| `totalFotokopi` | int | 0 | Modul 5 |
-| `totalScan` | int | 0 | Modul 5 |
-| `maxAntrianFotokopi` | int | 0 | Modul 5 |
-| `totalMesinRusak` | int | 0 | Modul 5 |
-| `totalWaktuRepair` | double | 0 | Modul 5 |
-| `totalHalamanDiproses` | int | 0 | Modul 5 |
-| `totalPeminjaman` | int | 0 | Modul 6 |
-| `totalPengembalian` | int | 0 | Modul 6 |
-| `totalDenda` | double | 0 | Modul 6 |
-| `totalBukuRusak` | int | 0 | Modul 6 |
-| `maxQueuePeminjaman` | int | 0 | Modul 6 |
-| `maxQueuePengembalian` | int | 0 | Modul 6 |
-| `totalBukuDipinjam` | int | 0 | Modul 6 |
-| `totalErrorScanner` | int | 0 | Modul 6 |
+| `totalKeHelpdesk` | int | 0 | Modul 3 |
+| `totalBukuTersedia` | int | 0 | Modul 3 |
+| `totalBukuDipinjamHelpdesk` | int | 0 | Modul 3 |
+| `totalBukuTidakAda` | int | 0 | Modul 3 |
+| `maxAntreanHelpdesk` | int | 0 | Modul 3 |
+| `totalWaktuTunggu` | double | 0 | Modul 3 |
+| `totalWaktuLayanan` | double | 0 | Modul 3 |
+| `totalToiletSinggah` | int | 0 | Modul 4 |
+| `totalCariBuku` | int | 0 | Modul 4 |
+| `totalLoker` | int | 0 | Modul 4 |
+| `totalDudukSepi` | int | 0 | Modul 4 |
+| `totalDudukDiskusi` | int | 0 | Modul 4 |
+| `maxAntrianDudukSepi` | int | 0 | Modul 4 |
+| `maxAntrianDudukDiskusi` | int | 0 | Modul 4 |
+| `totalDurasiBelajar` | double | 0 | Modul 4 |
+| `totalToiletPria` | int | 0 | Modul 5 |
+| `totalToiletWanita` | int | 0 | Modul 5 |
+| `maxAntrianToiletPria` | int | 0 | Modul 5 |
+| `maxAntrianToiletWanita` | int | 0 | Modul 5 |
+| `totalFotokopi` | int | 0 | Modul 6 |
+| `totalScan` | int | 0 | Modul 6 |
+| `maxAntrianFotokopi` | int | 0 | Modul 6 |
+| `totalMesinRusak` | int | 0 | Modul 6 |
+| `totalWaktuRepair` | double | 0 | Modul 6 |
+| `totalHalamanDiproses` | int | 0 | Modul 6 |
+| `totalPeminjaman` | int | 0 | Modul 7 |
+| `totalPengembalian` | int | 0 | Modul 7 |
+| `totalDenda` | double | 0 | Modul 7 |
+| `totalBukuRusak` | int | 0 | Modul 7 |
+| `maxQueuePeminjaman` | int | 0 | Modul 7 |
+| `maxQueuePengembalian` | int | 0 | Modul 7 |
+| `totalBukuDipinjam` | int | 0 | Modul 7 |
+| `totalErrorScanner` | int | 0 | Modul 7 |
 
 ---
 
@@ -154,7 +169,7 @@ Buka **Main**. Tambahkan semua variabel dari tabel di bawah. Total ~35 variabel.
 
 Buka **Main**, dari palette **Agent** drag **Function** ke canvas untuk setiap fungsi berikut. Copy kode dari modul masing-masing.
 
-### Semua fungsi (14 fungsi)
+### Semua fungsi (17 fungsi)
 
 | Nama Fungsi | Return type | Parameter | Modul |
 |---|---|---|---|
@@ -162,16 +177,19 @@ Buka **Main**, dari palette **Agent** drag **Function** ke canvas untuk setiap f
 | `hitungWaktuScanKTM(ped)` | double | PengunjungPed ped | Modul 2 |
 | `hitungWaktuCariParkirMobil()` | double | — | Modul 1 |
 | `hitungWaktuCariParkirMotor()` | double | — | Modul 1 |
-| `hitungDurasiBelajar(ped)` | double | PengunjungPed ped | Modul 3 |
-| `hitungWaktuToiletSinggah(ped)` | double | PengunjungPed ped | Modul 3 |
-| `hitungWaktuCariBuku(ped)` | double | PengunjungPed ped | Modul 3 |
-| `hitungWaktuLoker(ped)` | double | PengunjungPed ped | Modul 3 |
-| `hitungWaktuToilet()` | double | — | Modul 4 |
-| `hitungWaktuFotokopi(ped)` | double | PengunjungPed ped | Modul 5 |
-| `hitungWaktuServicePeminjaman(ped)` | double | PengunjungPed ped | Modul 6 |
-| `hitungWaktuServicePengembalian(ped)` | double | PengunjungPed ped | Modul 6 |
+| `avgWaktuTunggu()` | double | — | Modul 3 |
+| `avgWaktuLayanan()` | double | — | Modul 3 |
+| `tingkatKeberhasilanHelpdesk()` | double | — | Modul 3 |
+| `hitungDurasiBelajar(ped)` | double | PengunjungPed ped | Modul 4 |
+| `hitungWaktuToiletSinggah(ped)` | double | PengunjungPed ped | Modul 4 |
+| `hitungWaktuCariBuku(ped)` | double | PengunjungPed ped | Modul 4 |
+| `hitungWaktuLoker(ped)` | double | PengunjungPed ped | Modul 4 |
+| `hitungWaktuToilet()` | double | — | Modul 5 |
+| `hitungWaktuFotokopi(ped)` | double | PengunjungPed ped | Modul 6 |
+| `hitungWaktuServicePeminjaman(ped)` | double | PengunjungPed ped | Modul 7 |
+| `hitungWaktuServicePengembalian(ped)` | double | PengunjungPed ped | Modul 7 |
 | `avgWaktuSistem()` | double | — | Semua |
-| `rataRataDenda()` | double | — | Modul 6 |
+| `rataRataDenda()` | double | — | Modul 7 |
 
 > **Tips penting:** Pastikan semua fungsi menggunakan parameter `PengunjungPed ped`, **bukan** `Agent agent`. Kalau pakai `Agent`, akan error saat runtime.
 
@@ -189,16 +207,17 @@ Di **Main**, buka area markup. Tambahkan **Service with Lines** berikut:
 | Markup | Modul | Services | Queues | Posisi (X, Y) |
 |---|---|---|---|---|
 | `svcScanKTM` | Modul 2 | 2 | 2 | (10, 3) — dekat entry |
-| `svcToiletPria` | Modul 4 | 4 | 1 | (2, 16) — pojok kiri bawah |
-| `svcToiletWanita` | Modul 4 | 4 | 1 | (2, 22) — di atas toilet pria |
-| `svcToiletSinggah` | Modul 3 | 2 | 1 | (6, 16) — samping toilet |
-| `svcCariBuku` | Modul 3 | 2 | 2 | (6, 20) — area tengah |
-| `svcLoker` | Modul 3 | 3 | 1 | (10, 20) — dekat rak buku |
-| `svcAreaSepi` | Modul 3 | 10 | 2 | (16, 16) — area kanan bawah |
-| `svcAreaDiskusi` | Modul 3 | 4 | 2 | (16, 22) — area kanan atas |
-| `svcFotokopi` | Modul 5 | 2 | 1 | (10, 8) — tengah |
-| `svcPeminjaman` | Modul 6 | 2 | 2 | (12, 4) — kiri bawah |
-| `svcPengembalian` | Modul 6 | 1 | 1 | (18, 4) — kanan bawah |
+| `svcHelpdesk` | Modul 3 | 2 | 1 | (8, 14) — area helpdesk |
+| `svcToiletPria` | Modul 5 | 4 | 1 | (2, 16) — pojok kiri bawah |
+| `svcToiletWanita` | Modul 5 | 4 | 1 | (2, 22) — di atas toilet pria |
+| `svcToiletSinggah` | Modul 4 | 2 | 1 | (6, 16) — samping toilet |
+| `svcCariBuku` | Modul 4 | 2 | 2 | (6, 20) — area tengah |
+| `svcLoker` | Modul 4 | 3 | 1 | (10, 20) — dekat rak buku |
+| `svcAreaSepi` | Modul 4 | 10 | 2 | (16, 16) — area kanan bawah |
+| `svcAreaDiskusi` | Modul 4 | 4 | 2 | (16, 22) — area kanan atas |
+| `svcFotokopi` | Modul 6 | 2 | 1 | (10, 8) — tengah |
+| `svcPeminjaman` | Modul 7 | 2 | 2 | (12, 4) — kiri bawah |
+| `svcPengembalian` | Modul 7 | 1 | 1 | (18, 4) — kanan bawah |
 
 ### Layout final 3D (ilustrasi koordinat)
 
@@ -206,7 +225,7 @@ Di **Main**, buka area markup. Tambahkan **Service with Lines** berikut:
 Y=24  [ToiletWanita]                       [AreaDiskusi]
 Y=20  [ToiletPria]    [Loker]   [AreaSepi]
       [ToiletSinggah] [RakBuku]
-Y=16  [CariBuku]
+Y=16  [CariBuku]      [Helpdesk]
       [Fotokopi]
 Y=10  [entryLine]     [Peminjaman] [Pengembalian]
 Y=8   [ScanKTM]
@@ -246,22 +265,38 @@ selectPulang.out2 (isParkir=false) → snkSelesai.in
 selectPulang.out1 (isParkir=true) → wJalanBalikParkir.in → jalanKeParkiran.in
 ```
 
-### C. Dari Modul 3 (Cari Tempat Duduk)
+### C. Dari Modul 3 (Helpdesk Pencarian Buku)
+
+| Blok | Colok dari | Colok ke |
+|---|---|---|
+| `selectButuhBantuan` | dari `srvCariBuku.out` (Modul 4) | ke goToHelpdesk / langsung |
+| `goToHelpdesk` | `selectButuhBantuan.out2` (30%) | `antreHelpdesk.in` |
+| `antreHelpdesk` | `goToHelpdesk.out` | `srvHelpdesk.in` |
+| `srvHelpdesk` | `antreHelpdesk.out` | `selectStatusBuku.in` |
+| `selectStatusBuku` | `srvHelpdesk.out` | ke 3 output |
+| `goToRakBuku` | `selectStatusBuku.out1` (tersedia) | `goToPinjam.in` |
+| `goToPinjam` | out1/out2/Modul 4 langsung | `srvPinjam.in` (Modul 7) |
+
+> **Integrasi:** Modul 3 dipanggil dari `srvCariBuku.out` (Modul 4). Setelah cari buku mandiri (5-15 mnt), 30% mahasiswa yang gagal menemukan buku diarahkan ke `selectButuhBantuan` helpdesk. Output helpdesk yang berhasil (buku tersedia/dipinjam) ke `srvPinjam` (Modul 7). Yang tidak ditemukan ke `wJalanKeluar.in`.
+
+> **HAPUS** `srcMahasiswa` dan `snkSelesai` temporary dari Modul 3.
+
+### D. Dari Modul 4 (Cari Tempat Duduk)
 
 | Blok | Colok dari | Colok ke |
 |---|---|---|
 | `selectAktivitas` | `selectTujuan.out3` | ke 4 aktivitas |
 | `srvToiletSinggah` | `selectAktivitas.out1` | `selectZonaDuduk.in` |
-| `srvCariBuku` | `selectAktivitas.out2` | `selectZonaDuduk.in` |
+| `srvCariBuku` | `selectAktivitas.out2` | **70% → `selectZonaDuduk.in`**, **30% → `selectButuhBantuan.in` (Modul 3)** |
 | `srvLoker` | `selectAktivitas.out3` | `selectZonaDuduk.in` |
 | (langsung) | `selectAktivitas.out4` langsung | `selectZonaDuduk.in` |
 | `selectZonaDuduk` | dari 4 sumber | ke srvDudukSepi/srvDudukDiskusi |
 | `srvDudukSepi` | `selectZonaDuduk.out1` | **`wJalanKeluar.in`** |
 | `srvDudukDiskusi` | `selectZonaDuduk.out2` | **`wJalanKeluar.in`** |
 
-> **HAPUS** `srcMasuk` dan `snkSelesai` temporary dari Modul 3.
+> **HAPUS** `srcMasuk` dan `snkSelesai` temporary dari Modul 4.
 
-### D. Dari Modul 4 (Antrian Toilet)
+### E. Dari Modul 5 (Antrian Toilet)
 
 | Blok | Colok dari | Colok ke |
 |---|---|---|
@@ -269,24 +304,24 @@ selectPulang.out1 (isParkir=true) → wJalanBalikParkir.in → jalanKeParkiran.i
 | `srvToiletPria` | `selectGenderToilet.out1` | **`wJalanKeluar.in`** |
 | `srvToiletWanita` | `selectGenderToilet.out2` | **`wJalanKeluar.in`** |
 
-> **HAPUS** `srcMasuk` dan `snkSelesai` temporary dari Modul 4.
+> **HAPUS** `srcMasuk` dan `snkSelesai` temporary dari Modul 5.
 
-### E. Dari Modul 5 (Fotokopi/Scan)
+### F. Dari Modul 6 (Fotokopi/Scan)
 
 | Blok | Colok dari | Colok ke |
 |---|---|---|
 | `srvFotokopi` | `selectTujuan.out5` | **`wJalanKeluar.in`** |
 
-> **HAPUS** `srcMasuk` dan `snkSelesai` temporary dari Modul 5.
+> **HAPUS** `srcMasuk` dan `snkSelesai` temporary dari Modul 6.
 
-### F. Dari Modul 6 (Peminjaman & Pengembalian)
+### G. Dari Modul 7 (Peminjaman & Pengembalian)
 
 | Blok | Colok dari | Colok ke |
 |---|---|---|
 | `srvPinjam` | `selectTujuan.out1` | **`wJalanKeluar.in`** |
 | `srvKembali` | `selectTujuan.out2` | **`wJalanKeluar.in`** |
 
-> **HAPUS** `srcMasuk`, `snkSelesai`, dan `selectJenisLayanan` temporary dari Modul 6. Routing pinjam/kembali langsung dari `selectTujuan`.
+> **HAPUS** `srcMasuk`, `snkSelesai`, dan `selectJenisLayanan` temporary dari Modul 7. Routing pinjam/kembali langsung dari `selectTujuan`.
 
 ---
 
@@ -327,17 +362,19 @@ Gabungkan semua objek 3D di Main dengan mengatur **posisi** masing-masing agar t
 | `floor3D` | 2 | 15 | 12 | 30x24x0.2 |
 | `mejaResepsionis3D` | 2 | 10 | 3 | 3x1x1.2 |
 | `lantaiParkir3D` | 1 | 15 | 0 | 20x6x0.2 |
-| `mejaPinjam3D` | 6 | 13 | 4 | 3x1x1.2 |
-| `mejaKembali3D` | 6 | 19 | 4 | 3x1x1.2 |
-| `rakBuku3D_1` | 3 | 8 | 18 | 2x4x2 |
-| `rakBuku3D_2` | 3 | 8 | 21 | 2x4x2 |
-| `loker3D` | 3 | 12 | 20 | 2x0.5x2 |
-| `mejaSepi3D_1` s/d `_10` | 3 | 16-24 | 17-20 | 1.5x1x1.2 |
-| `mejaDiskusi3D_1` s/d `_4` | 3 | 18-24 | 21-23 | 2x2x1.2 |
-| `bilikToiletPria_1` s/d `_4` | 4 | 3-6 | 16-19 | 1x1x2 |
-| `bilikToiletWanita_1` s/d `_4` | 4 | 3-6 | 20-23 | 1x1x2 |
-| `mesinFotokopi1_3D` | 5 | 10 | 10 | 2x1x1.5 |
-| `mesinFotokopi2_3D` | 5 | 13 | 10 | 2x1x1.5 |
+| `mejaHelpdesk3D` | 3 | 8 | 14 | 3x1.5x1.2 |
+| `komputer3D` | 3 | 8 | 14 | 0.8x0.6x0.8 |
+| `mejaPinjam3D` | 7 | 13 | 4 | 3x1x1.2 |
+| `mejaKembali3D` | 7 | 19 | 4 | 3x1x1.2 |
+| `rakBuku3D_1` | 4 | 8 | 18 | 2x4x2 |
+| `rakBuku3D_2` | 4 | 8 | 21 | 2x4x2 |
+| `loker3D` | 4 | 12 | 20 | 2x0.5x2 |
+| `mejaSepi3D_1` s/d `_10` | 4 | 16-24 | 17-20 | 1.5x1x1.2 |
+| `mejaDiskusi3D_1` s/d `_4` | 4 | 18-24 | 21-23 | 2x2x1.2 |
+| `bilikToiletPria_1` s/d `_4` | 5 | 3-6 | 16-19 | 1x1x2 |
+| `bilikToiletWanita_1` s/d `_4` | 5 | 3-6 | 20-23 | 1x1x2 |
+| `mesinFotokopi1_3D` | 6 | 10 | 10 | 2x1x1.5 |
+| `mesinFotokopi2_3D` | 6 | 13 | 10 | 2x1x1.5 |
 
 **Cara:**
 1. Buka diagram Main.
@@ -391,6 +428,11 @@ Tambahkan **Text** dinamis di Main untuk dashboard lengkap:
 ```
 
 ```java
+// HELPDESK
+"HELPDESK — Dilayani: " + totalKeHelpdesk
++ " | Buku Tersedia: " + totalBukuTersedia + " | Dipinjam: " + totalBukuDipinjamHelpdesk + " | Tidak Ada: " + totalBukuTidakAda
++ "  Antrian helpdesk: " + srvHelpdesk.queueSize() + " | Tingkat keberhasilan: " + String.format("%.1f", tingkatKeberhasilanHelpdesk()) + "%"
+
 // FOTOKOPI
 "FOTOKOPI — Fotokopi: " + totalFotokopi + " | Scan: " + totalScan
 + "  Antrian: " + srvFotokopi.queueSize() + " | Mesin rusak: " + totalMesinRusak

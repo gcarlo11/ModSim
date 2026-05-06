@@ -23,11 +23,11 @@ Modul ini adalah **pusat simulasi perpustakaan**. Fungsinya:
 srcJalanKaki → srvScanKTM (antri scan KTM)
                         ↓
                  selectTujuan (6 output)
-    ├── out1 (25%) → srvPinjam           (Modul 6)
-    ├── out2 (15%) → srvKembali           (Modul 6)
-    ├── out3 (25%) → srvCariDuduk         (Modul 3)
-    ├── out4 (10%) → selectGenderToilet   (Modul 4)
-    ├── out5 (10%) → srvFotokopi          (Modul 5)
+    ├── out1 (25%) → srvPinjam           (Modul 7)
+    ├── out2 (15%) → srvKembali           (Modul 7)
+    ├── out3 (25%) → srvCariDuduk         (Modul 4)
+    ├── out4 (10%) → selectGenderToilet   (Modul 5)
+    ├── out5 (10%) → srvFotokopi          (Modul 6)
     └── out6 (15%) → wJalanKeluar (langsung keluar)
                         ↓
                  selectPulang (isParkir?)
@@ -143,7 +143,8 @@ Sekarang buka diagram `PengunjungPed` (klik 2x di panel Projects). Dari palette 
 
 ### 4.4 Meja resepsionis (opsional)
 
-1. **Box** lain → rename `mejaResepsionis3D`.
+1. **Box** lain → rename `mejaResepsionis
+`.
 2. Ukuran: 3x1x1.2. Posisi: (10, 3).
 
 ---
@@ -212,11 +213,11 @@ srcJalanKaki.out → srvScanKTM.in
 
 srvScanKTM.out → selectTujuan.in
 
-selectTujuan.out1 (25%, PINJAM) → [nanti colok ke Modul 6]
-selectTujuan.out2 (15%, KEMBALI) → [nanti colok ke Modul 6]
-selectTujuan.out3 (25%, CARI DUDUK) → [nanti colok ke Modul 3]
-selectTujuan.out4 (10%, TOILET) → [nanti colok ke Modul 4]
-selectTujuan.out5 (10%, FOTOKOPI) → [nanti colok ke Modul 5]
+selectTujuan.out1 (25%, PINJAM) → [nanti colok ke Modul 7]
+selectTujuan.out2 (15%, KEMBALI) → [nanti colok ke Modul 7]
+selectTujuan.out3 (25%, CARI DUDUK) → [nanti colok ke Modul 4]
+selectTujuan.out4 (10%, TOILET) → [nanti colok ke Modul 5]
+selectTujuan.out5 (10%, FOTOKOPI) → [nanti colok ke Modul 6]
 selectTujuan.out6 (15%, LANGSUNG) → wJalanKeluar.in
 
 wJalanKeluar.out → selectPulang.in
@@ -299,11 +300,11 @@ if (!ped.isValidKTM) {
 |---|---|---|
 | `N outputs` | `6` | 6 jalur tujuan |
 | `Use probabilities` | **Centang** | Pakai probabilitas |
-| Output 1 | `0.25` | 25% → PINJAM (Modul 6) |
-| Output 2 | `0.15` | 15% → KEMBALI (Modul 6) |
-| Output 3 | `0.25` | 25% → CARI DUDUK (Modul 3) |
-| Output 4 | `0.10` | 10% → TOILET (Modul 4) |
-| Output 5 | `0.10` | 10% → FOTOKOPI (Modul 5) |
+| Output 1 | `0.25` | 25% → PINJAM (Modul 7) |
+| Output 2 | `0.15` | 15% → KEMBALI (Modul 7) |
+| Output 3 | `0.25` | 25% → CARI DUDUK (Modul 4) |
+| Output 4 | `0.10` | 10% → TOILET (Modul 5) |
+| Output 5 | `0.10` | 10% → FOTOKOPI (Modul 6) |
 | Output 6 | `0.15` | 15% → LANGSUNG KELUAR |
 
 > **Verifikasi:** 0.25 + 0.15 + 0.25 + 0.10 + 0.10 + 0.15 = **1.0 (100%)**. Jika kurang atau lebih dari 1.0, AnyLogic akan kasih error.
@@ -499,11 +500,11 @@ Karena modul 3-6 belum ada, untuk testing kita perlu sambungkan `selectTujuan.ou
 
 Saat modul lain siap, lakukan ini:
 
-1. **`selectTujuan.out1`** → colok ke `srvPinjam.in` (Modul 6)
-2. **`selectTujuan.out2`** → colok ke `srvKembali.in` (Modul 6)
-3. **`selectTujuan.out3`** → colok ke `selectAktivitas.in` (Modul 3)
-4. **`selectTujuan.out4`** → colok ke `selectGenderToilet.in` (Modul 4)
-5. **`selectTujuan.out5`** → colok ke `srvFotokopi.in` (Modul 5)
+1. **`selectTujuan.out1`** → colok ke `srvPinjam.in` (Modul 7)
+2. **`selectTujuan.out2`** → colok ke `srvKembali.in` (Modul 7)
+3. **`selectTujuan.out3`** → colok ke `selectAktivitas.in` (Modul 4)
+4. **`selectTujuan.out4`** → colok ke `selectGenderToilet.in` (Modul 5)
+5. **`selectTujuan.out5`** → colok ke `srvFotokopi.in` (Modul 6)
 6. **`wJalanBalikParkir.out`** → colok ke `jalanKeParkiran.in` (Modul 1)
 7. **`snkParkir`** → hapus (karena sudah di-handle Modul 1)
 

@@ -3,7 +3,9 @@
     "allow": [
       "Bash(powershell *)",
       "Bash(Get-ChildItem -Path \"D:\\\\vscode\\\\Kuliahan\\\\ModSim\\\\Perpustakaan\\\\SimulasiParkirPerpustakaan\" -Recurse)",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(Copy-Item *)",
+      "PowerShell(Copy-Item *)"
     ]
   }
 }

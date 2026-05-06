@@ -1,4 +1,4 @@
-# Modul 6: Peminjaman & Pengembalian Buku
+# Modul 7: Peminjaman & Pengembalian Buku
 ## Dua Counter (Pinjam 2 titik + Kembali 1 titik) + Error Scanner + Denda
 
 **AnyLogic versi:** 8.9.8
