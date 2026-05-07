@@ -46,7 +46,7 @@ srcJalanKaki ────┘          │ (6 output)                            
 | Modul 4 | `selectAktivitas`, `srvToiletSinggah`, `srvCariBuku`, `srvLoker`, `selectZonaDuduk`, `srvDudukSepi`, `srvDudukDiskusi` | Harus selesai |
 | Modul 5 | `selectGenderToilet`, `srvToiletPria`, `srvToiletWanita` | Harus selesai |
 | Modul 6 | `srvFotokopi` | Harus selesai |
-| Modul 7 | `srvPinjam`, `srvKembali` | Harus selesai |
+| Modul 7 | `goToRakBuku`, `wKelilingRak`, `goToCounterPinjam`, `selectJadiPinjam`, `srvPinjam`, `goToCounterKembali`, `srvKembali` | Harus selesai |
 
 ---
 
@@ -70,7 +70,7 @@ Buka diagram **PengunjungPed** (klik 2x di panel Projects). Tambahkan **semua va
 3. Pilih type yang sesuai.
 4. Isi initial value.
 
-### Semua variabel PengunjungPed (30 variabel)
+### Semua variabel PengunjungPed (40 variabel)
 
 | Nama | Type | Initial | Modul Asal | Keterangan |
 |---|---|---|---|---|
@@ -111,6 +111,9 @@ Buka diagram **PengunjungPed** (klik 2x di panel Projects). Tambahkan **semua va
 | `waktuKembali` | double | `0` | Modul 7 | Waktu transaksi kembali |
 | `jumlahHariTerlambat` | int | `0` | Modul 7 | Hari keterlambatan |
 | `denda` | double | `0` | Modul 7 | Total denda |
+| `waktuMulaiBrowsing` | double | `0` | Modul 7 | Waktu mulai keliling rak |
+| `durasiBrowsing` | double | `0` | Modul 7 | Total waktu browsing rak |
+| `jadiPinjam` | boolean | `true` | Modul 7 | `true`=jadi pinjam, `false`=batal |
 
 > **Tips:** Buka semua diagram PengunjungPed dari modul 1-7 secara bersamaan. Bandingkan daftar variabel. Copy yang belum ada di file `_Full`.
 
@@ -118,7 +121,7 @@ Buka diagram **PengunjungPed** (klik 2x di panel Projects). Tambahkan **semua va
 
 ## Langkah 3: Merge Semua Variabel di Main
 
-Buka **Main**. Tambahkan semua variabel dari tabel di bawah. Total ~42 variabel.
+Buka **Main**. Tambahkan semua variabel dari tabel di bawah. Total ~45 variabel.
 
 | Nama | Type | Initial | Modul |
 |---|---|---|---|
@@ -162,6 +165,9 @@ Buka **Main**. Tambahkan semua variabel dari tabel di bawah. Total ~42 variabel.
 | `maxQueuePengembalian` | int | 0 | Modul 7 |
 | `totalBukuDipinjam` | int | 0 | Modul 7 |
 | `totalErrorScanner` | int | 0 | Modul 7 |
+| `totalBrowsing` | int | 0 | Modul 7 |
+| `totalBatalPinjam` | int | 0 | Modul 7 |
+| `totalDurasiBrowsing` | double | 0 | Modul 7 |
 
 ---
 
@@ -169,7 +175,7 @@ Buka **Main**. Tambahkan semua variabel dari tabel di bawah. Total ~42 variabel.
 
 Buka **Main**, dari palette **Agent** drag **Function** ke canvas untuk setiap fungsi berikut. Copy kode dari modul masing-masing.
 
-### Semua fungsi (17 fungsi)
+### Semua fungsi (20 fungsi)
 
 | Nama Fungsi | Return type | Parameter | Modul |
 |---|---|---|---|
@@ -188,8 +194,11 @@ Buka **Main**, dari palette **Agent** drag **Function** ke canvas untuk setiap f
 | `hitungWaktuFotokopi(ped)` | double | PengunjungPed ped | Modul 6 |
 | `hitungWaktuServicePeminjaman(ped)` | double | PengunjungPed ped | Modul 7 |
 | `hitungWaktuServicePengembalian(ped)` | double | PengunjungPed ped | Modul 7 |
+| `hitungWaktuBrowsing()` | double | — | Modul 7 |
 | `avgWaktuSistem()` | double | — | Semua |
 | `rataRataDenda()` | double | — | Modul 7 |
+| `avgWaktuBrowsing()` | double | — | Modul 7 |
+| `tingkatBatalPinjam()` | double | — | Modul 7 |
 
 > **Tips penting:** Pastikan semua fungsi menggunakan parameter `PengunjungPed ped`, **bukan** `Agent agent`. Kalau pakai `Agent`, akan error saat runtime.
 
@@ -227,7 +236,8 @@ Y=20  [ToiletPria]    [Loker]   [AreaSepi]
       [ToiletSinggah] [RakBuku]
 Y=16  [CariBuku]      [Helpdesk]
       [Fotokopi]
-Y=10  [entryLine]     [Peminjaman] [Pengembalian]
+Y=12  [RakBukuPinjam_1-3]                  [Rak Helpdesk]
+Y=10  [entryLine]                           [Peminjaman] [Pengembalian]
 Y=8   [ScanKTM]
 Y=4
 Y=2
@@ -318,10 +328,15 @@ selectPulang.out1 (isParkir=true) → wJalanBalikParkir.in → jalanKeParkiran.i
 
 | Blok | Colok dari | Colok ke |
 |---|---|---|
-| `srvPinjam` | `selectTujuan.out1` | **`wJalanKeluar.in`** |
-| `srvKembali` | `selectTujuan.out2` | **`wJalanKeluar.in`** |
+| `goToRakBuku` | `selectTujuan.out1` | `wKelilingRak.in` |
+| `wKelilingRak` | `goToRakBuku.out` | `goToCounterPinjam.in` |
+| `goToCounterPinjam` | `wKelilingRak.out` | `selectJadiPinjam.in` |
+| `selectJadiPinjam` | `goToCounterPinjam.out` | out1 → `srvPinjam.in`, out2 → `wJalanKeluar.in` |
+| `srvPinjam` | `selectJadiPinjam.out1` (90%) | **`wJalanKeluar.in`** |
+| `goToCounterKembali` | `selectTujuan.out2` | `srvKembali.in` |
+| `srvKembali` | `goToCounterKembali.out` | **`wJalanKeluar.in`** |
 
-> **HAPUS** `srcMasuk`, `snkSelesai`, dan `selectJenisLayanan` temporary dari Modul 7. Routing pinjam/kembali langsung dari `selectTujuan`.
+> **HAPUS** `srcMasuk`, `selectJenisLayanan`, dan `snkSelesai` temporary dari Modul 7. Routing pinjam/kembali langsung dari `selectTujuan` skeleton. `selectTujuan.out1` (pinjam) → `goToRakBuku`, `selectTujuan.out2` (kembali) → `goToCounterKembali`.
 
 ---
 
@@ -366,6 +381,9 @@ Gabungkan semua objek 3D di Main dengan mengatur **posisi** masing-masing agar t
 | `komputer3D` | 3 | 8 | 14 | 0.8x0.6x0.8 |
 | `mejaPinjam3D` | 7 | 13 | 4 | 3x1x1.2 |
 | `mejaKembali3D` | 7 | 19 | 4 | 3x1x1.2 |
+| `rakBukuPinjam3D_1` | 7 | 6 | 8 | 1x3x2 |
+| `rakBukuPinjam3D_2` | 7 | 9 | 8 | 1x3x2 |
+| `rakBukuPinjam3D_3` | 7 | 6 | 12 | 1x3x2 |
 | `rakBuku3D_1` | 4 | 8 | 18 | 2x4x2 |
 | `rakBuku3D_2` | 4 | 8 | 21 | 2x4x2 |
 | `loker3D` | 4 | 12 | 20 | 2x0.5x2 |
