@@ -586,185 +586,372 @@ traceln("DONE " + ped.idPed
 
 ## 6. Langkah 5: Integrasi Modul Parkir
 
-Modul Parkir (`SimulasiParkirPerpustakaan`) sudah dalam satuan MINUTE dan menggunakan Road Traffic Library untuk mobil + Pedestrian Library untuk orang.
+Modul Parkir (`SimulasiParkirPerpustakaan`) sudah dalam MINUTE dan menggunakan **Road Traffic Library** untuk mobil + **Pedestrian Library** untuk orang + **Process Modeling Library** untuk Delay/SelectOutput.
 
-### 6.1 Blok yang Akan Di-Copy dari Modul Parkir
+### 6.1 Arsitektur Parkir — Konsep Dasar
 
-Buka file `Modul Parkir.alp` di jendela AnyLogic terpisah. Copy blok berikut ke `Perpustakaan3D_Full.alp`:
+Di AnyLogic, **Road Traffic Library** punya blok khusus untuk kendaraan:
+- **CarSource** — sumber mobil/motor (seperti PedSource tapi untuk kendaraan)
+- **CarMoveTo** — perintah jalan ke tujuan (seperti PedGoTo tapi untuk kendaraan)
+- **CarDispose** — buang kendaraan (seperti PedSink)
 
-**Blok Car Flow (Road Traffic):**
-| Blok | Nama | Fungsi |
+> ⚠️ **PENTING:** `CarMoveTo` berbeda dengan `PedService`. CarMoveTo **TIDAK** punya properti `Delay time`, `On begin service`, atau `On end service`. CarMoveTo hanya menggerakkan mobil dari titik A ke titik B di jalan raya. Waktu tempuh = jarak / kecepatan mobil.
+
+Untuk mensimulasikan "waktu cari parkir", kita gunakan blok **Delay** (dari Process Modeling Library) setelah mobil mencapai tempat parkir.
+
+### 6.2 Diagram Alur Parkir — Mobil
+
+```
+srcParkirMobil (CarSource)
+    │  mobil muncul di road
+    ▼
+moveKeParkirMobil (CarMoveTo)
+    │  mobil jalan ke parkingLot
+    │  onExit: trigger orangDatang.inject(1)
+    ▼
+cariParkirMobil (Delay)
+    │  delay = hitungWaktuCariParkirMobil() — simulasi cari tempat
+    ▼
+keluarParkirMobil (CarMoveTo)
+    │  mobil jalan keluar
+    ▼
+buangMobil (CarDispose)
+    │  mobil dihapus
+```
+
+### 6.3 Diagram Alur Parkir — Motor
+
+```
+srcParkirMotor (CarSource)
+    ▼
+moveKeParkirMotor (CarMoveTo)
+    │  onExit: trigger orangDatang.inject(1)
+    ▼
+cariParkirMotor (Delay)
+    │  delay = hitungWaktuCariParkirMotor()
+    ▼
+keluarParkirMotor (CarMoveTo)
+    ▼
+buangMotor (CarDispose)
+```
+
+### 6.4 Diagram Alur — Pejalan Kaki dari Parkir
+
+```
+orangDatang (PedSource — MANUAL, dipicu inject())
+    ▼
+jalanKePerpus (PedGoTo)
+    ▼
+srvScanKTM.in (bergabung dengan jalur pejalan kaki lain)
+```
+
+### 6.5 Diagram Alur — Kembali ke Parkir (Pulang)
+
+```
+selectPulang.out1 (isParkir == true)
+    ▼
+jalanKeParkiran (PedGoTo — jalan ke area parkir)
+    ▼
+snkParkirKeluar (PedSink — selesai)
+```
+
+### 6.6 Buat Markup untuk Parkir
+
+Sebelum membuat blok, siapkan markup Road Traffic:
+
+1. Dari palette **Space Markup**, drag **Road** ke canvas Main → rename `road`
+   - Gambar garis road (panjang sesuai kebutuhan, misal dari X=0 ke X=30)
+   - Atur jumlah lane (misal 2 lane)
+
+2. Dari palette **Space Markup**, drag **Parking Lot** → rename `parkingLot`
+   - Letakkan di samping road
+   - Atur jumlah kapasitas (misal total 20: 10 mobil + 10 motor)
+   - Atau buat 2 parking lot terpisah: `parkingLotMobil` dan `parkingLotMotor`
+
+3. Dari palette **Space Markup**, drag **Stop Line** → rename `garisTunggu` (opsional)
+   - Letakkan di road sebelum parking lot
+
+4. **TargetLine** → `areaPejalanKaki` (area pejalan kaki dari parkir ke perpus)
+
+### 6.7 Blok yang Harus Dibuat
+
+Dari **Road Traffic Library**:
+
+| Blok | Rename | Fungsi |
 |---|---|---|
 | CarSource | `srcParkirMobil` | Mobil masuk parkir |
 | CarSource | `srcParkirMotor` | Motor masuk parkir |
-| CarMoveTo | `srvParkirMobil` | Mobil cari parkir |
-| CarMoveTo | `srvParkirMotor` | Motor cari parkir |
-| CarMoveTo | `jalanKePerpus` | Jalan dari parkir ke perpus |
-| CarMoveTo | `jalanKeParkiran` | Jalan dari perpus ke parkir |
-| CarDispose | `buangMobil` | Mobil keluar |
-| CarDispose | `buangMotor` | Motor keluar |
+| CarMoveTo | `moveKeParkirMobil` | Mobil jalan ke tempat parkir |
+| CarMoveTo | `moveKeParkirMotor` | Motor jalan ke tempat parkir |
+| CarMoveTo | `keluarParkirMobil` | Mobil jalan keluar parkir |
+| CarMoveTo | `keluarParkirMotor` | Motor jalan keluar parkir |
+| CarDispose | `buangMobil` | Mobil dihapus |
+| CarDispose | `buangMotor` | Motor dihapus |
 
-**Blok Pedestrian Flow:**
-| Blok | Nama | Fungsi |
+Dari **Process Modeling Library** (untuk delay):
+
+| Blok | Rename | Fungsi |
 |---|---|---|
-| PedSource | `orangDatang` | Orang muncul dari parkir (trigger manual) |
-| PedGoTo | `pedJalanKePerpus` | Orang jalan ke perpus |
-| PedSink | `snkOrangMasuk` | Selesai masuk perpus (TEMPORARY) |
+| Delay | `cariParkirMobil` | Waktu cari parkir mobil |
+| Delay | `cariParkirMotor` | Waktu cari parkir motor |
 
-### 6.2 Cara Copy Blok
+Dari **Pedestrian Library** (untuk orang):
 
-**Cara termudah:** Buat ulang blok di project baru daripada copy-paste (karena copy antar project AnyLogic sering bermasalah).
+| Blok | Rename | Fungsi |
+|---|---|---|
+| PedSource | `orangDatang` | Orang dari parkir (dipicu manual) |
+| PedGoTo | `jalanKePerpus` | Jalan dari parkir ke perpus |
+| PedGoTo | `jalanKeParkiran` | Jalan dari perpus ke parkir |
+| PedSink | `snkParkirKeluar` | Selesai parkir |
 
-1. Buka `Perpustakaan3D_Full.alp` (base project kita)
-2. Dari palette **Road Traffic Library**, drag blok yang diperlukan
-3. Rename sesuai tabel di atas
-4. Atur properti masing-masing
+### 6.8 Cara Membuat Blok
 
-### 6.3 Konfigurasi `srcParkirMobil`
+Semua blok dibuat langsung di canvas **Main** project `Perpustakaan3D_Full.alp`:
 
-| Property | Nilai |
-|---|---|
-| `Appears at` | `road` |
-| `Road` | `road` |
-| `Arrive according to` | `Interarrival time` |
-| `Interarrival time` | `exponential(0.5)` (rata-rata 1 mobil per 2 menit) |
-| `New car` | (default car type) |
+**Langkah per langkah:**
 
-**Action On exit:**
+1. Buka palette **Road Traffic Library**
+2. Drag **CarSource** ke canvas → rename `srcParkirMobil`
+3. Drag **CarSource** lagi → rename `srcParkirMotor`
+4. Drag **CarMoveTo** → rename `moveKeParkirMobil`
+5. Drag **CarMoveTo** → rename `moveKeParkirMotor`
+6. Drag **CarMoveTo** → rename `keluarParkirMobil`
+7. Drag **CarMoveTo** → rename `keluarParkirMotor`
+8. Drag **CarDispose** → rename `buangMobil`
+9. Drag **CarDispose** → rename `buangMotor`
+10. Buka palette **Process Modeling Library**
+11. Drag **Delay** → rename `cariParkirMobil`
+12. Drag **Delay** → rename `cariParkirMotor`
+13. Buka palette **Pedestrian Library**
+14. Drag **PedSource** → rename `orangDatang`
+15. Drag **PedGoTo** → rename `jalanKePerpus`
+16. Drag **PedGoTo** → rename `jalanKeParkiran`
+17. Drag **PedSink** → rename `snkParkirKeluar`
+
+### 6.9 Konfigurasi `srcParkirMobil` (CarSource)
+
+Klik blok `srcParkirMobil`. Di panel **Properties**, atur:
+
+**Tab General:**
+| Property | Nilai | Penjelasan |
+|---|---|---|
+| `Appears at` | `road` | Mobil muncul di jalan raya |
+| `Road` | `road` | Pilih markup road yang sudah dibuat |
+
+**Tab Arrivals:**
+| Property | Nilai | Penjelasan |
+|---|---|---|
+| `Arrive according to` | `Interarrival time` | Diatur waktu antar kedatangan |
+| `Interarrival time` | `exponential(0.5)` | Rata-rata 1 mobil setiap 2 menit |
+
+**Tab Actions → On exit:**
 ```java
 seqPed++;
-ped.idPed = "Mobil-" + seqPed;
-ped.tMasuk = time();
-ped.isParkir = true;
-ped.jenisKendaraan = "MOBIL";
+// Catat: CarSource menghasilkan agent Car, bukan pedestrian.
+// Kita simpan data di variabel global agar bisa dipakai pedestrian nanti
+tempIdPed = "Mobil-" + seqPed;
+tempIsParkir = true;
+tempJenisKendaraan = "MOBIL";
 
 totalMobil++;
-traceln("MOBIL datang: " + ped.idPed);
+
+traceln("MOBIL datang: " + tempIdPed + " | waktu=" + String.format("%.1f", time()) + " mnt");
 ```
 
-### 6.4 Konfigurasi `srcParkirMotor`
+> **Catatan:** `seqPed++` menggunakan variabel yang sudah ada di Main. `tempIdPed`, `tempIsParkir`, `tempJenisKendaraan` adalah variabel global baru yang perlu dibuat di Main (String, boolean, String).
 
+### 6.10 Konfigurasi `srcParkirMotor` (CarSource)
+
+**Tab Arrivals:**
 | Property | Nilai |
 |---|---|
-| `Road` | `road` |
-| `Interarrival time` | `exponential(0.3)` (rata-rata 1 motor per 3.3 menit) |
+| `Interarrival time` | `exponential(0.3)` | Rata-rata 1 motor setiap ~3.3 menit |
 
-**Action On exit:**
+**Tab Actions → On exit:**
 ```java
 seqPed++;
-ped.idPed = "Motor-" + seqPed;
-ped.tMasuk = time();
-ped.isParkir = true;
-ped.jenisKendaraan = "MOTOR";
+tempIdPed = "Motor-" + seqPed;
+tempIsParkir = true;
+tempJenisKendaraan = "MOTOR";
 
 totalMotor++;
-traceln("MOTOR datang: " + ped.idPed);
+
+traceln("MOTOR datang: " + tempIdPed + " | waktu=" + String.format("%.1f", time()) + " mnt");
 ```
 
-### 6.5 Konfigurasi `srvParkirMobil`
+### 6.11 Konfigurasi `moveKeParkirMobil` (CarMoveTo)
 
+> ⚠️ **Perhatikan:** `CarMoveTo` **TIDAK** memiliki `Delay time`, `On begin service`, atau `On end service`. Blok ini hanya menggerakkan mobil ke target.
+
+**Tab General:**
+| Property | Nilai | Penjelasan |
+|---|---|---|
+| `Target type` | `parkingLot` | Target adalah tempat parkir |
+| `Target parking lot` | `parkingLot` | Pilih markup parkingLot |
+| `Speed` | (kosongkan) | Gunakan kecepatan default mobil (1 MPS) |
+
+**Tab Actions → On exit** (saat mobil sampai di parkir):
+```java
+// Trigger pedestrian spawn — orang turun dari mobil
+orangDatang.inject(1);
+
+traceln("PARKIR Mobil: " + tempIdPed + " selesai parkir — orang jalan ke perpus");
+```
+
+### 6.12 Konfigurasi `moveKeParkirMotor` (CarMoveTo)
+
+**Tab General:**
 | Property | Nilai |
 |---|---|
-| `Delay time` | `hitungWaktuCariParkirMobil()` |
+| `Target type` | `parkingLot` |
+| `Target parking lot` | `parkingLot` |
 
-**Action On begin service:**
+**Tab Actions → On exit:**
 ```java
-ped.waktuParkir = time();
+orangDatang.inject(1);
+traceln("PARKIR Motor: " + tempIdPed + " selesai parkir — orang jalan ke perpus");
 ```
 
-### 6.6 Konfigurasi `srvParkirMotor`
+### 6.13 Konfigurasi `cariParkirMobil` (Delay — Process Modeling)
 
+> Blok `Delay` dari **Process Modeling Library** digunakan untuk mensimulasikan waktu yang dihabiskan mencari tempat parkir dan waktu mobil parkir.
+
+**Tab General:**
+| Property | Nilai | Penjelasan |
+|---|---|---|
+| `Delay time` | `hitungWaktuCariParkirMobil()` | Panggil fungsi yang sudah dibuat |
+| `Maximum capacity` | Centang | Biarkan tak terbatas |
+
+### 6.14 Konfigurasi `cariParkirMotor` (Delay)
+
+**Tab General:**
 | Property | Nilai |
 |---|---|
 | `Delay time` | `hitungWaktuCariParkirMotor()` |
+| `Maximum capacity` | Centang |
 
-**Action On begin service:**
-```java
-ped.waktuParkir = time();
-```
+### 6.15 Konfigurasi `keluarParkirMobil` (CarMoveTo) & `keluarParkirMotor` (CarMoveTo)
 
-### 6.7 Konfigurasi `orangDatang` (PedSource)
-
-PedSource ini dipicu MANUAL setelah mobil parkir.
-
+**Tab General — `keluarParkirMobil`:**
 | Property | Nilai |
 |---|---|
-| `Appears at` | `line` |
-| `Target line` | `areaPejalanKaki` |
-| `Arrive according to` | `Rate` |
-| `Rate` | `0` (tidak jalan otomatis — dipicu manual via inject) |
-| `New pedestrian` | `PengunjungPed` |
+| `Target type` | `road` |
+| `Target road` | `road` |
 
-### 6.8 Trigger orangDatang dari srvParkirMobil
+**Tab General — `keluarParkirMotor`:**
+| Property | Nilai |
+|---|---|
+| `Target type` | `road` |
+| `Target road` | `road` |
 
-Di **Action On end service** `srvParkirMobil`, tambahkan:
+### 6.16 Konfigurasi `buangMobil` & `buangMotor` (CarDispose)
+
+Tidak ada properti khusus yang perlu diatur. Cukup rename saja.
+
+### 6.17 Konfigurasi `orangDatang` (PedSource — dipicu MANUAL)
+
+PedSource ini tidak berjalan otomatis. Dipicu oleh `inject(1)` dari blok CarMoveTo.
+
+**Tab General:**
+| Property | Nilai | Penjelasan |
+|---|---|---|
+| `Appears at` | `line` | Muncul di target line |
+| `Target line` | `areaPejalanKaki` | Garis area pejalan kaki |
+| `Arrive according to` | `Rate` | Mode rate (tapi rate = 0, manual) |
+| `Rate` | `0` | **0 = tidak ada kedatangan otomatis** |
+| `New pedestrian` | `PengunjungPed` | Tipe pedestrian |
+
+**Tab Actions → On exit:**
 ```java
-traceln("PARKIR Mobil: " + ped.idPed + " selesai — jalan ke perpus");
-// Trigger pedestrian spawn
-orangDatang.inject(1);
-// Note: kita butuh cara passing data dari car ke pedestrian
-```
-
-> **Masalah:** Mobil dan pedestrian adalah object berbeda. Kita perlu menyimpan data parkir (idPed, tMasuk, isParkir, jenisKendaraan) agar bisa diakses pedestrian yang baru di-inject. Solusi: buat variabel **global sementara** di Main, atau gunakan pendekatan `pedJalanKePerpus` langsung tanpa PedSource.
-
-**Pendekatan alternatif — lebih sederhana:**
-
-Hapus `orangDatang`, `pedJalanKePerpus`, `snkOrangMasuk`. Ganti dengan `jalanKePerpus.out` langsung colok ke `srvScanKTM.in`. Tapi ini hanya bisa dilakukan jika blok CarMoveTo bisa colok ke PedService — **tidak bisa** karena tipe berbeda (Car vs Pedestrian).
-
-**Solusi paling praktis:** Gunakan `inject()` dengan bantuan variabel global:
-
-1. Buat variabel di Main: `tempIdPed` (String), `tempIsParkir` (boolean), `tempJenisKendaraan` (String)
-2. Di `srvParkirMobil.onEndService`:
-```java
-tempIdPed = ped.idPed;
-tempIsParkir = true;
-tempJenisKendaraan = "MOBIL";
-orangDatang.inject(1);
-```
-3. Di `orangDatang.onExit`:
-```java
+// Ambil data dari variabel global yang di-set oleh CarSource
 ped.idPed = tempIdPed;
 ped.tMasuk = time();
 ped.isParkir = tempIsParkir;
 ped.jenisKendaraan = tempJenisKendaraan;
+ped.waktuParkir = time();
+
 traceln("ORANG " + ped.idPed + " jalan dari parkir ke perpus");
 ```
-4. Lakukan hal yang sama untuk `srvParkirMotor`.
 
-### 6.9 Hubungkan Flow Parkir
+### 6.18 Konfigurasi `jalanKePerpus` (PedGoTo)
 
-```
-srcParkirMobil.out → srvParkirMobil.in → (trigger inject)
-srcParkirMotor.out → srvParkirMotor.in → (trigger inject)
-
-orangDatang.out → pedJalanKePerpus.in → srvScanKTM.in (bergabung dengan srcJalanKaki)
-```
-
-### 6.10 Blok Pulang (dari perpus ke parkir)
-
-`jalanKeParkiran` adalah CarMoveTo yang mengarahkan mobil ke luar. Tapi karena mobil sudah parkir dan "dimatikan", kita perlu pedestrian yang jalan balik ke parkir:
-
-```
-dari selectPulang.out1 (isParkir=true)
-  → wJalanBalikParkir.in
-  → jalanKeParkiran.in (trigger inject orangPulang → jalan ke parkir)
-  → buangMobil.in
-```
-
-**Sederhananya:** Untuk modul parkir, setelah `selectPulang.out1`:
-1. Pedestrian jalan ke area parkir (PedGoTo)
-2. Sampai di mobil → selesai (PedSink)
-
-Buat:
-| Blok | Nama | Koneksi |
+| Property | Nilai | Penjelasan |
 |---|---|---|
-| PedGoTo | `jalanKeParkiran` | `selectPulang.out1` → `jalanKeParkiran.in` |
-| PedSink | `snkParkirKeluar` | `jalanKeParkiran.out` → `snkParkirKeluar.in` |
+| `Target type` | `Attractor` or `Node` | Pilih node |
+| `Target node` | (pilih node dekat `srvScanKTM`) | Biarkan pedestrian jalan ke area scan KTM |
 
-**Konfigurasi `jalanKeParkiran`:**
+> **Tips:** Buat **PointNode** baru di markup beri nama `nodePintuPerpus`, letakkan di dekat entryLine. Jadikan node ini sebagai target `jalanKePerpus`.
+
+### 6.19 Konfigurasi `jalanKeParkiran` (PedGoTo — untuk pulang)
+
+**Tab General:**
 | Property | Nilai |
 |---|---|
-| `Target` | `areaPejalanKaki` |
+| `Target type` | `line` |
+| `Target line` | `areaPejalanKaki` |
+
+### 6.20 Konfigurasi `snkParkirKeluar` (PedSink)
+
+Tidak perlu properti khusus. Bisa ditambahkan action on enter jika ingin tracking:
+```java
+traceln("PULANG " + ped.idPed + " — sampai di parkir, naik kendaraan");
+```
+
+### 6.21 Tambah Variabel Global di Main
+
+Untuk passing data dari Car ke Pedestrian, buat 3 variabel baru di **Main**:
+
+| Nama | Type | Initial | Fungsi |
+|---|---|---|---|
+| `tempIdPed` | String | `""` | Menyimpan ID pedestrian sementara |
+| `tempIsParkir` | boolean | `false` | Menyimpan status parkir sementara |
+| `tempJenisKendaraan` | String | `""` | Menyimpan jenis kendaraan sementara |
+
+### 6.22 Koneksi Flow Parkir
+
+Hubungkan port (drag dari port out ke port in):
+
+**Flow Mobil:**
+```
+srcParkirMobil.out → moveKeParkirMobil.in → cariParkirMobil.in → keluarParkirMobil.in → buangMobil.in
+```
+
+**Flow Motor:**
+```
+srcParkirMotor.out → moveKeParkirMotor.in → cariParkirMotor.in → keluarParkirMotor.in → buangMotor.in
+```
+
+**Flow Pejalan Kaki (berangkat):**
+```
+orangDatang.out → jalanKePerpus.in → srvScanKTM.in
+```
+> `jalanKePerpus.out` colok ke `srvScanKTM.in` (bergabung dengan `srcJalanKaki.out`)
+
+**Flow Pejalan Kaki (pulang):**
+```
+selectPulang.out1 (isParkir==true) → jalanKeParkiran.in → snkParkirKeluar.in
+```
+
+### 6.23 Verifikasi Flow Parkir
+
+Pastikan:
+- `srcParkirMobil` → CarSource dengan `road` dan `exponential(0.5)`
+- `moveKeParkirMobil` → CarMoveTo dengan target `parkingLot`, **BUKAN PedService**
+- `cariParkirMobil` → Delay (Process Modeling), **BUKAN CarMoveTo**
+- `keluarParkirMobil` → CarMoveTo dengan target `road`
+- `buangMobil` → CarDispose
+- `orangDatang.inject(1)` dipanggil di **On exit** `moveKeParkirMobil` (bukan On end service)
+- `jalanKePerpus.out` colok ke `srvScanKTM.in`
+- `selectPulang.out1` colok ke `jalanKeParkiran.in`
+
+### 6.24 Test Parkir
+
+1. **Stop time** = `10` menit
+2. Run
+3. Cek console: apakah ada `MOBIL datang`, `PARKIR Mobil`, `ORANG ... jalan dari parkir`?
+4. Jika error `parkingLot not found` → cek markup Parking Lot sudah dibuat
+5. Jika error `road not found` → cek markup Road sudah dibuat
+6. Jika orang dari parkir tidak muncul → cek `orangDatang.inject(1)` ada di onExit CarMoveTo
 
 ---
 
