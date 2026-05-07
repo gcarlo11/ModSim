@@ -415,27 +415,33 @@ traceln("SELESAI_LAYANAN " + ped.idPed + " | durasi=" + String.format("%.1f", pe
 | Output 2 | `0.35` (35% buku sedang dipinjam orang lain) |
 | Output 3 | `0.25` (25% buku tidak ditemukan sama sekali) |
 
-**Action On exit (setiap port):**
-```java
-int port = getExitPortIndex();
+**Action On exit (setiap port terpisah):**
 
-switch (port) {
-    case 0:
-        ped.statusBuku = "TERSEDIA";
-        totalBukuTersedia++;
-        traceln("STATUS " + ped.idPed + " | BUKU TERSEDIA → ke rak buku");
-        break;
-    case 1:
-        ped.statusBuku = "DIPINJAM";
-        totalBukuDipinjam++;
-        traceln("STATUS " + ped.idPed + " | SEDANG DIPINJAM → reservasi");
-        break;
-    case 2:
-        ped.statusBuku = "TIDAK_ADA";
-        totalBukuTidakAda++;
-        traceln("STATUS " + ped.idPed + " | TIDAK DITEMUKAN → keluar");
-        break;
-}
+> ⚠️ **PENTING:** JANGAN pakai `getExitPortIndex()` — method itu hanya ada di action **On exit port**, dan di beberapa versi AnyLogic malah undefined. Sebagai gantinya, isi kode **LANGSUNG** di masing-masing **On exit port** (klik tab **Actions → On exit port** di Properties blok ini). Atau lebih aman: pakai cara di bawah ini dengan menulis kode di **On exit** tapi tanpa `getExitPortIndex()`.
+
+**Cara paling aman (tanpa getExitPortIndex):**
+
+Klik 2x properties `selectStatusBuku`, tab **Actions**:
+
+- **On exit port 1** (buku tersedia):
+```java
+ped.statusBuku = "TERSEDIA";
+totalBukuTersedia++;
+traceln("STATUS " + ped.idPed + " | BUKU TERSEDIA → ke rak buku");
+```
+
+- **On exit port 2** (sedang dipinjam):
+```java
+ped.statusBuku = "DIPINJAM";
+totalBukuDipinjam++;
+traceln("STATUS " + ped.idPed + " | SEDANG DIPINJAM → reservasi");
+```
+
+- **On exit port 3** (tidak ditemukan):
+```java
+ped.statusBuku = "TIDAK_ADA";
+totalBukuTidakAda++;
+traceln("STATUS " + ped.idPed + " | TIDAK DITEMUKAN → keluar");
 ```
 
 ### 6.7 `goToRakBuku` (PedGoTo)

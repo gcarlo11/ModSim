@@ -309,13 +309,43 @@ if (!ped.isValidKTM) {
 
 > **Verifikasi:** 0.25 + 0.15 + 0.25 + 0.10 + 0.10 + 0.15 = **1.0 (100%)**. Jika kurang atau lebih dari 1.0, AnyLogic akan kasih error.
 
-**Action (On exit port):** Di tab Actions, cari **On exit port**:
-```java
-// Catat tujuan untuk tracing
-String[] tujuan = {"PINJAM", "KEMBALI", "CARIDUDUK", "TOILET", "FOTOKOPI", "LANGSUNG"};
-int idx = getExitPortIndex();
-ped.tujuanLayanan = tujuan[idx];
+**Action (isi per port di tab Actions → On exit port):**
 
+> ⚠️ **PENTING:** Jangan pakai kode yang sama untuk semua port. Isi **masing-masing On exit port** secara terpisah.
+
+- **On exit port 1:**
+```java
+ped.tujuanLayanan = "PINJAM";
+traceln("TUJUAN " + ped.idPed + " → " + ped.tujuanLayanan);
+```
+
+- **On exit port 2:**
+```java
+ped.tujuanLayanan = "KEMBALI";
+traceln("TUJUAN " + ped.idPed + " → " + ped.tujuanLayanan);
+```
+
+- **On exit port 3:**
+```java
+ped.tujuanLayanan = "CARIDUDUK";
+traceln("TUJUAN " + ped.idPed + " → " + ped.tujuanLayanan);
+```
+
+- **On exit port 4:**
+```java
+ped.tujuanLayanan = "TOILET";
+traceln("TUJUAN " + ped.idPed + " → " + ped.tujuanLayanan);
+```
+
+- **On exit port 5:**
+```java
+ped.tujuanLayanan = "FOTOKOPI";
+traceln("TUJUAN " + ped.idPed + " → " + ped.tujuanLayanan);
+```
+
+- **On exit port 6:**
+```java
+ped.tujuanLayanan = "LANGSUNG";
 traceln("TUJUAN " + ped.idPed + " → " + ped.tujuanLayanan);
 ```
 
