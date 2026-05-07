@@ -357,6 +357,7 @@ Mengarahkan mahasiswa berjalan dari posisi saat ini menuju titik helpdesk.
 |---|---|---|
 | `Queue capacity` | Kosong (unlimited) | Antrean tanpa batas |
 | `Waiting location` | `areaAntreHelpdesk` | Area tunggu |
+| `Enable exit on timeout` | **JANGAN centang** | Biarkan unchecked |
 
 **Action On enter:**
 ```java
